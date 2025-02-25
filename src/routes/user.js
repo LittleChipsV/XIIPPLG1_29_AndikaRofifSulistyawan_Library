@@ -1,18 +1,18 @@
 const express = require("express");
+const authenticate = require('../middleware/authenticate');
 const userController = require("../controllers/user");
-const userValidation = require ('../middleware/validations/user');
-const errorValidationHandler = require('../middleware/errorValidationHandler');
-const authenticate = require('../middleware/auth');
+const validateData = require("../middleware/validateRequest");
+const userSchema = require("../validations/user");
 
 const router = express.Router();
 
 router.route("/")
   .get(authenticate, userController.index)
-  .post(authenticate, userValidation, errorValidationHandler, userController.store);
+  .post(authenticate, validateData(userSchema), userController.store);
 
 router.route("/:id")
   .get(authenticate, userController.show)
-  .put(authenticate, userValidation, errorValidationHandler, userController.update)
+  .put(authenticate, validateData(userSchema), userController.update)
   .delete(authenticate, userController.destroy);
 
 module.exports = router;

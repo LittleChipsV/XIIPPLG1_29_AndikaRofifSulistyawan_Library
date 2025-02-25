@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
   Category.init(
     {
       name: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING,
         allowNull: false,
         validate: {
           notNull: true,
@@ -30,7 +30,6 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "Category",
       tableName: "categories",
       underscored: true,
       timestamps: false,

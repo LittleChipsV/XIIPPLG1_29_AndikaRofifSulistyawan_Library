@@ -10,8 +10,8 @@ module.exports = (sequelize, DataTypes) => {
    */
   class UserRefreshToken extends Model {
     static associate(models) {
-      this.belongsTo(models.User, {
-        foreignKey: "userId",
+      UserRefreshToken.belongsTo(models.User, {
+        foreignKey: "user_id",
         as: "user",
       });
     }
@@ -19,16 +19,11 @@ module.exports = (sequelize, DataTypes) => {
 
   UserRefreshToken.init(
     {
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
-      userId: {
+      user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "Users",
+          model: "users",
           key: "id",
         },
         onUpdate: "CASCADE",
@@ -42,8 +37,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "UserRefreshToken",
       tableName: "user_refresh_tokens",
+      underscored: true,
       timestamps: true,
     }
   );

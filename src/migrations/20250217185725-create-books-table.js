@@ -10,15 +10,15 @@ module.exports = {
         allowNull: false,
       },
       title: {
-        type: Sequelize.STRING(255),
+        type: Sequelize.STRING,
         allowNull: false,
       },
       writer: {
-        type: Sequelize.STRING(255),
+        type: Sequelize.STRING,
         allowNull: false,
       },
       publisher: {
-        type: Sequelize.STRING(255),
+        type: Sequelize.STRING,
         allowNull: false,
       },
       year: {
@@ -35,7 +35,6 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: { model: "categories", key: "id" },
-        onDelete: "CASCADE",
       },
     });
   },

@@ -37,8 +37,32 @@ module.exports = (sequelize, DataTypes) => {
 
   Book.init(
     {
+      user_id: {
+        type: DataTypes.INTEGER, 
+        allowNull: true, 
+        references: {
+          model: 'users',
+          key: 'id'
+        },
+        validate: {
+          isInt: true, 
+        },
+        onDelete: 'SET NULL'
+      },
+      category_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false, 
+        references: {
+          model: 'categories',
+          key: 'id' 
+        },
+        validate: {
+          isInt: true,
+          notNull: true
+        }
+      },
       title: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING,
         allowNull: false,
         validate: {
           notNull: true,
@@ -46,7 +70,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       writer: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING,
         allowNull: false,
         validate: {
           notNull: true,
@@ -54,7 +78,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       publisher: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING,
         allowNull: false,
         validate: {
           notNull: true,
@@ -70,26 +94,9 @@ module.exports = (sequelize, DataTypes) => {
           max: new Date().getFullYear(),
         },
       },
-      user_id: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        references: {
-          model: "users",
-          key: "id",
-        },
-      },
-      category_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: "categories",
-          key: "id",
-        },
-      },
     },
     {
       sequelize,
-      modelName: "Book",
       tableName: "books",
       underscored: true,
       timestamps: false,

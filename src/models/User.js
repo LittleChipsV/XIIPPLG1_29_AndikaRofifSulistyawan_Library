@@ -1,3 +1,5 @@
+const { comparePassword, hashPassword } = require('../utils/passwordHelper');
+
 "use strict";
 const { Model } = require("sequelize");
 
@@ -23,16 +25,27 @@ module.exports = (sequelize, DataTypes) => {
 
       User.hasMany(models.Review, {
         foreignKey: "user_id",
-        as: 'reviews',
-        onDelete: 'CASCADE'
+        as: "reviews",
+        onDelete: "CASCADE",
       });
+
+      User.hasOne(models.UserRefreshToken),{
+        foreignKey: "user_id",
+        as: "refresh_token",
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
+      };
+    }
+
+    async isValidPassword(password) {
+      return await comparePassword(password, this.password);
     }
   }
 
   User.init(
     {
       username: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING,
         allowNull: false,
         validate: {
           notNull: true,
@@ -40,7 +53,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       name: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING,
         allowNull: false,
         validate: {
           notNull: true,
@@ -48,7 +61,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       password: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING,
         allowNull: false,
         validate: {
           notNull: true,
@@ -56,7 +69,7 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       email: {
-        type: DataTypes.STRING(255),
+        type: DataTypes.STRING,
         allowNull: false,
         unique: true,
         validate: {
@@ -72,10 +85,31 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "User",
       tableName: "users",
       underscored: true,
       timestamps: false,
+      defaultScope: {
+        attributes: { exclude: ["password"] },
+      },
+      scopes: {
+        withPassword: {
+          attributes: {
+            include: ["password"],
+          },
+        },
+      },
+      hooks: {
+        beforeCreate: async (user) => {
+          if (user.password) {
+            user.password = await hashPassword(user.password);
+          }
+        },
+        beforeUpdate: async (user) => {
+          if (user.changed("password")) {
+            user.password = await hashPassword(user.password);
+          }
+        },
+      },
     }
   );
 

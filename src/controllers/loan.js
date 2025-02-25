@@ -1,75 +1,62 @@
 const { Loan, Book, User } = require('../models');
+const AppError = require('../utils/AppError');
+const asyncHandler = require('../utils/asyncHandler');
 
-exports.index = async (req, res, next) => {
-  try {
-    const loans = await Loan.findAll({
-      include: [
-        { model: Book, as: "book", attributes: ["id", "title"] },
-        { model: User, as: "user", attributes: ["id", "username", "email"] },
-      ],
-    });
-    res.json({message: "Loan berhasil ditemukan", data: loans});
-  } catch (error) {
-    next(error);
+exports.index = asyncHandler(async (req, res) => {
+  const loans = await Loan.findAll({
+    include: [
+      { model: Book, as: "book", attributes: ["id", "title"] },
+      { model: User, as: "user", attributes: ["id", "username", "email"] },
+    ],
+  });
+  res.json({message: "Loan berhasil didapat", data: { loans }});
+});
+
+
+exports.show = asyncHandler(async (req, res) => {
+  const loan = await Loan.findByPk(req.params.id, {
+    include: [
+      { model: Book, as: "book", attributes: ["id", "title"] },
+      { model: User, as: "user", attributes: ["id", "username", "email"] },
+    ],
+  });
+
+  if (!loan) {
+    throw new AppError("Loan tidak ditemukan", 404)
   }
-};
 
-exports.show = async (req, res, next) => {
-  try {
-    const loan = await Loan.findByPk(req.params.id, {
-      include: [
-        { model: Book, as: "book", attributes: ["id", "title"] },
-        { model: User, as: "user", attributes: ["id", "username", "email"] },
-      ],
-    });
+  res.json({message: "Loan berhasil didapat", data: { loan }});
+});
 
-    if (!loan) {
-      return res.status(404).json({  message: "Loan tidak ditemukan" });
-    }
 
-    res.json({message: "Loan berhasil ditemukan", data: loan});
-  } catch (error) {
-    next(error);
+exports.store = asyncHandler(async (req, res) => {
+  const { book_id, user_id, loan_date, return_date, status } = req.body;
+  const loan = await Loan.create({ book_id, user_id, loan_date, return_date, status });
+  res.status(201).json({message: "Loan berhasil ditambahkan", data: { loan }});
+});
+
+
+exports.update = asyncHandler(async (req, res) => {
+  const loan = await Loan.findByPk(req.params.id);
+
+  if (!loan) {
+    throw new AppError("Loan tidak ditemukan", 404)
   }
-};
 
-exports.store = async (req, res, next) => {
-  try {
-    const { book_id, user_id, loan_date, return_date, status } = req.body;
-    const newLoan = await Loan.create({ book_id, user_id, loan_date, return_date, status });
-    res.status(201).json({message: "Loan berhasil ditambahkan", data: newLoan});
-  } catch (error) {
-    next(error);
+  const { book_id, user_id, loan_date, return_date, status } = req.body;
+  
+  await loan.update({ book_id, user_id, loan_date, return_date, status });
+  res.json({message: "Loan berhasil di-update", data: { loan }});
+});
+
+
+exports.destroy = asyncHandler(async (req, res, next) => {
+  const loan = await Loan.findByPk(req.params.id);
+
+  if (!loan) {
+    throw new AppError("Loan tidak ditemukan");
   }
-};
 
-exports.update = async (req, res, next) => {
-  try {
-    const loan = await Loan.findByPk(req.params.id);
-
-    if (!loan) {
-      return res.status(404).json({  message: "Loan tidak ditemukan" });
-    }
-
-    const { book_id, user_id, loan_date, return_date, status } = req.body;
-
-    await loan.update({ book_id, user_id, loan_date, return_date, status });
-    res.json({message: "Loan berhasil di-update", data: loan});
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.destroy = async (req, res, next) => {
-  try {
-    const loan = await Loan.findByPk(req.params.id);
-    if (!loan) {
-      return res.status(404).json({  message: "Loan tidak ditemukan" });
-    }
-
-    await loan.destroy();
-    res.json({message: "Loan berhasil dihapus"});
-  } catch (error) {
-    next(error);
-  }
-};
+  await loan.destroy();
+  res.json({message: "Loan berhasil dihapus"});
+});

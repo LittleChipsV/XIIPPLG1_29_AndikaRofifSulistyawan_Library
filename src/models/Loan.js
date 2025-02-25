@@ -25,6 +25,30 @@ module.exports = (sequelize, DataTypes) => {
 
   Loan.init(
     {
+      book_id: {
+        type: DataTypes.INTEGER, 
+        allowNull: false, 
+        references: {
+          model: 'books',
+          key: 'id'
+        },
+        validate: {
+          isInt: true, 
+          notNull: false
+        }
+      },
+      user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false, 
+        references: {
+          model: 'users',
+          key: 'id' 
+        },
+        validate: {
+          isInt: true,
+          notNull: true
+        }
+      },
       loan_date: {
         type: DataTypes.DATEONLY,
         allowNull: false,
@@ -47,11 +71,11 @@ module.exports = (sequelize, DataTypes) => {
           notNull: true,
           notEmpty: true,
         },
+        defaultValue: "Dipinjam"
       },
     },
     {
       sequelize,
-      modelName: "Loan",
       tableName: "loans",
       underscored: true,
       timestamps: false,

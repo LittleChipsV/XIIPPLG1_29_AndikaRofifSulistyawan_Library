@@ -1,104 +1,64 @@
-const { User } = require('../models');
-const { hashPassword } = require("../utils/hash");
+const { User } = require("../models");
+const AppError = require("../utils/AppError");
+const asyncHandler = require("../utils/asyncHandler");
 
- exports.index = async (req, res, next) => {
-   try {
-     const users = await User.findAll({
-       attributes: ['id', 'username', 'name', 'email', 'phone'],
-     });
- 
-     res.json({ message: "User berhasil didapat", data: users });
-   } catch (error) {
-     next(error);
-   }
- };
- 
- exports.show = async (req, res, next) => {
-   try {
-     const user = await User.findByPk(req.params.id, {
-       attributes: ['id', 'username', 'name', 'email', 'phone'],
-     });
- 
-     if (!user) {
-      return res.status(404).json({ message: 'User tidak ditemukan' });
-    }
- 
-     res.json({ message: "User berhasil didapat", data: user });
-   } catch (error) {
-     next(error);
-   }
- };
+exports.index = asyncHandler(async (req, res) => {
+  const users = await User.findAll();
+  res.json({ message: "User berhasil didapat", data: { users } });
+});
 
- exports.store = async (req, res, next) => {
-   try {
-     const { username, name, email, password, phone } = req.body;
- 
-     const hashedPassword = await hashPassword(password);
- 
-     const newUser = await User.create({
-       username,
-       name,
-       email,
-       password: hashedPassword,
-       phone,
-     });
- 
-     const userResponse = newUser.toJSON();
-     delete userResponse.password;
- 
-     res.status(201).json({
-       message: 'User berhasil dibuat',
-       data: userResponse,
-     });
-   } catch (error) {
-     next(error);
-   }
- };
- 
- exports.update = async (req, res, next) => {
-   try {
-     const { username, name, email, password, phone } = req.body;
- 
-     const user = await User.findByPk(req.params.id);
+exports.show = asyncHandler(async (req, res) => {
+  const user = await User.findByPk(req.params.id);
 
-     if (!user) {
-      return res.status(404).json({ message: 'User tidak ditemukan' });
-    }
- 
-     const hashedPassword = await hashPassword(password);
- 
-     user.username = username || user.username;
-     user.name = name || user.name;
-     user.email = email || user.email;
-     user.password = hashedPassword || user.password;
-     user.phone = phone || user.phone;
- 
-     await user.save();
- 
-     const userResponse = user.toJSON();
-     delete userResponse.password;
- 
-     res.json({
-       message: 'User berhasil di-update',
-       data: userResponse,
-     });
-   } catch (error) {
-     next(error);
-   }
- };
- 
- exports.destroy = async (req, res, next) => {
-   try { 
-     const user = await User.findByPk(req.params.id);
-     
-     if (!user) {
-       return res.status(404).json({ message: 'User tidak ditemukan' });
-     }
- 
-     await user.destroy();
- 
-     res.json({ message: 'User berhasil dihapus' });
-   } catch (error) {
-     next(error);
-   }
- };
+  if (!user) {
+    throw new AppError("User tidak ditemukan", 404);
+  }
+
+  res.json({ message: "User berhasil didapat", data: { user } });
+});
+
+
+exports.store = asyncHandler(async (req, res) => {
+  const { username, name, email, password, phone } = req.body;
+
+  const user = await User.create({ username, name, email, password, phone });
+
+  const userResponse = { ...user.get(), password: undefined };
+
+  res.status(201).json({
+    message: "User berhasil dibuat",
+    data: { user: userResponse },
+  });
+});
+
+
+exports.update = asyncHandler(async (req, res) => {
+  const { username, name, email, password, phone } = req.body;
+
+  const user = await User.scope("withPassword").findByPk(req.params.id);
+
+  if (!user) {
+    throw new AppError("User tidak ditemukan", 404);
+  }
+
+  await user.update({ username, name, email, password, phone })
+
+  const userResponse = { ...user.get(), password: undefined };
+
+  res.json({
+    message: "User berhasil di-update",
+    data: { user:  userResponse },
+  });
+});
+
+
+exports.destroy = asyncHandler(async (req, res) => {
+  const user = await User.findByPk(req.params.id);
+
+  if (!user) {
+    throw new AppError("User tidak ditemukan", 404);
+  }
+
+  await user.destroy();
+  res.json({ message: "User berhasil dihapus" });
+});

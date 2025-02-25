@@ -1,104 +1,73 @@
 const { Review, Book, User } = require("../models");
+const AppError = require("../utils/AppError");
+const asyncHandler = require("../utils/asyncHandler");
 
-exports.index = async (req, res, next) => {
-   try {
-     const reviews = await Review.findAll({
-       include: [
-         { model: User, as: 'user', attributes: ['id', 'name'] }, 
-         { model: Book, as: 'book', attributes: ['id', 'title'] },
-       ],
-     });
- 
-     res.json({ message: "Review berhasil didapat", data: reviews });
-   } catch (error) {
-     next(error);
-   }
- };
+exports.index = asyncHandler(async (req, res) => {
+  const reviews = await Review.findAll({
+    include: [
+      { model: User, as: 'user', attributes: ['id', 'name'] }, 
+      { model: Book, as: 'book', attributes: ['id', 'title'] },
+    ],
+  });
+
+  res.json({ message: "Review berhasil didapat", data: { reviews } });
+ });
  
 
-exports.show = async (req, res, next) => {
-  try {
-    const { id } = req.params;
+exports.show = asyncHandler(async (req, res) => {
+  const review = await Review.findByPk(req.params.id, {
+    include: [
+      { model: User, as: 'user', attributes: ["id", "name"] },
+      { model: Book, as: 'book', attributes: ["id", "title"] },
+    ],
+  });
 
-    const review = await Review.findByPk(id, {
-      include: [
-        { model: User, as: 'user', attributes: ["id", "name"] },
-        { model: Book, as: 'book', attributes: ["id", "title"] },
-      ],
-    });
-
-    if (!review) {
-      return res.status(404).json({ message: "Review tidak ditemukan" });
-    }
-
-    res.json({ message: "Review berhasil didapat", data: review});
-  } catch (error) {
-    next(error);
+  if (!review) {
+    throw new AppError("Review tidak ditemukan", 404);
   }
-};
 
-exports.store = async (req, res, next) => {
-  try {
-    const { book_id, rating, comment } = req.body;
-    const user_id = req.user.id;
+  res.json({ message: "Review berhasil didapat", data: { review }});
+});
 
-    const book = await Book.findByPk(book_id);
 
-    if (!book) {
-      return res.status(404).json({ message: "Buku tidak ditemukan" });
-    } 
+exports.store = asyncHandler(async (req, res) => {
+  const { book_id, user_id, rating, comment } = req.body;
 
-    const newReview = await Review.create({
-      book_id,
-      user_id,
-      rating,
-      comment,
-    });
+  const review = await Review.create({book_id, user_id, rating, comment});
 
-    res.status(201).json({
-      message: "Review berhasil ditambahkan",
-      data: newReview,
-    });
-  } catch (error) {
-    next(error);
+  res.status(201).json({
+    message: "Review berhasil ditambahkan",
+    data: { review },
+  });
+});
+
+
+exports.update = asyncHandler(async (req, res) => {
+  const { book_id, user_id, rating, comment } = req.body;
+
+  const review = await Review.findByPk(req.params.id);
+
+  if (!review) {
+    throw new AppError("Review tidak ditemukan", 404);
   }
-};
 
-exports.update = async (req, res, next) => {
-  try {
-    const { rating, comment } = req.body;
+  await review.update({ book_id, user_id, rating, comment });
 
-    const review = await Review.findByPk(req.params.id);
+  res.status(200).json({
+    message: "Review berhasil di-update",
+    data: { review },
+  });
+});
 
-    if (!review) {
-       return res.status(404).json({ message: "Review tidak ditemukan" });
-    }
 
-    review.rating = rating;
-    review.comment = comment;
-    await review.save();
+exports.destroy = asyncHandler(async (req, res) => {
+  const review = await Review.findByPk(req.params.id);
 
-    res.status(200).json({
-      message: "Review berhasil di-update",
-      data: review,
-    });
-  } catch (error) {
-    next(error);
+  if (!review) { 
+    throw new AppError("Review tidak ditemukan", 404);
   }
-};
 
-exports.destroy = async (req, res, next) => {
-  try {
-    const review = await Review.findByPk(req.params.id);
+  await review.destroy();
 
-    if (!review) { 
-      return res.status(404).json({ message: "Review not found" });
-    }
-
-    await review.destroy();
-
-    res.json({ message: "Review berhasil dihapus" });
-  } catch (error) {
-    next(error);
-  }
-};
+  res.json({ message: "Review berhasil dihapus" });
+});

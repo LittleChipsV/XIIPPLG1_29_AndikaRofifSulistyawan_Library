@@ -25,6 +25,30 @@ module.exports = (sequelize, DataTypes) => {
 
   Review.init(
     {
+      book_id: {
+        type: DataTypes.INTEGER, 
+        allowNull: false, 
+        references: {
+          model: 'books',
+          key: 'id'
+        },
+        validate: {
+          isInt: true, 
+          notNull: true
+        }
+      },
+      user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false, 
+        references: {
+          model: 'users',
+          key: 'id' 
+        },
+        validate: {
+          isInt: true,
+          notNull: true
+        }
+      },
       rating: {
         type: DataTypes.TINYINT,
         allowNull: false,
@@ -38,17 +62,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
-      created_at: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-      },
     },
     {
       sequelize,
-      modelName: "Review",
       tableName: "reviews",
       underscored: true,
-      timestamps: false,
+      updatedAt: false
     }
   );
 

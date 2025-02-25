@@ -1,5 +1,7 @@
-module.exports = (req, res, next) => {
-  res.status(404).json({
-    message: `Route '${req.originalUrl}' tidak ditemukan`,
-  });
+const AppError = require('../utils/AppError');
+
+const RouteNotFoundHandler = (req, res, next) => {
+  next(new AppError(`Route ${req.originalUrl} dengan request method ${req.method} tidak ditemukan`, 404));
 };
+
+module.exports = RouteNotFoundHandler;
